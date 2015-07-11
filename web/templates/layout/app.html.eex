@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Hello Phoenix!</title>
+    <link rel="stylesheet" href="<%= static_path(@conn, "/css/app.css") %>">
+  </head>
+
+  <body>
+    <!-- navigation -->
+    <nav>
+      <div class="nav-wrapper">
+          <a class="brand-logo">Logo</a>
+          <ul id="nav-mobile" class="right hide-on-med-down" >
+              <li><a href="http://www.phoenixframework.org/docs">Get Started</a></li>
+          </ul>
+      </div>
+    </nav>
+
+    <!-- Main container -->
+    <div class="container" role="main">
+      
+      <p class="alert alert-info" role="alert"><%= get_flash(@conn, :info) %></p>
+      <p class="alert alert-danger" role="alert"><%= get_flash(@conn, :error) %></p>
+
+      <%= @inner %>
+
+    </div>
+
+    <!-- View -->
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.0/js/materialize.min.js"></script>
+
+    <!-- P2P Stuff -->
+    <script src="http://cdn.peerjs.com/0.3/peer.js"></script>
+
+    <!-- Application -->
+    <script type="text/javascript" src="<%= static_path(@conn, "/js/app.js") %>"></script>
+    
+    <script>require("web/static/js/app")</script>
+    
+  </body>
+</html>
