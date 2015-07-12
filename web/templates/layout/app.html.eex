@@ -7,7 +7,8 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Hello Phoenix!</title>
+    <title>Ephemeral Share</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="<%= static_path(@conn, "/css/app.css") %>">
   </head>
 
@@ -15,9 +16,8 @@
     <!-- navigation -->
     <nav>
       <div class="nav-wrapper">
-          <a class="brand-logo">Logo</a>
+          <a class="brand-logo">Ephemeral Share</a>
           <ul id="nav-mobile" class="right hide-on-med-down" >
-              <li><a href="http://www.phoenixframework.org/docs">Get Started</a></li>
           </ul>
       </div>
     </nav>
@@ -35,7 +35,7 @@
     <!-- View -->
     <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.0/js/materialize.min.js"></script>
-
+    <script src="https://fb.me/react-0.13.3.js"></script>
     <!-- P2P Stuff -->
     <script src="http://cdn.peerjs.com/0.3/peer.js"></script>
 

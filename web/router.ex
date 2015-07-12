@@ -18,6 +18,10 @@ defmodule EphemeralShare.Router do
     get "/", PageController, :index
   end
 
+  socket "/ws", EphemeralShare do
+    channel "broker:*", BrokerChannel
+  end
+
   # Other scopes may use custom stacks.
   # scope "/api", EphemeralShare do
   #   pipe_through :api
