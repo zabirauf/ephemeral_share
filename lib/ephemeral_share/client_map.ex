@@ -1,19 +1,26 @@
 defmodule EphemeralShare.ClientMap do
 
+  require Logger
+
   def start_link() do
-    Agent.start_link(fn -> HashSet.new end, name: __MODULE__)
+    Agent.start_link(fn -> HashDict.new end, name: __MODULE__)
   end
 
   def add_client(key, socket) do
+    Logger.debug "ClientMap: Add: #{key}, #{inspect(socket)}"
     Agent.update(__MODULE__, fn(h) ->
       Dict.put(h, key, socket)
     end)
   end
 
   def get_client(key) do
-    Agent.get(__MODULE__, fn(h) ->
+    Logger.debug "ClientMap: Get: Start: #{key}"
+    value = Agent.get(__MODULE__, fn(h) ->
       Dict.get(h, key, :not_found)
     end)
+    Logger.debug "ClientMap: Get: End: #{inspect(value)}"
+
+    value
   end
 
   def remove_client(key) do

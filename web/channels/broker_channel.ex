@@ -1,6 +1,7 @@
 defmodule EphemeralShare.BrokerChannel do
   use Phoenix.Channel
 
+  require Logger
   alias EphemeralShare.ClientMap
 
   def join("broker:match", _auth_msg, socket) do
@@ -16,26 +17,29 @@ defmodule EphemeralShare.BrokerChannel do
     {:shutdown, :left}
   end
 
-  def handle_in("register", _, socket) do
+  def handle_in("register", %{}, socket) do
     id = UUID.uuid4()
     ClientMap.add_client(id, socket)
     assign(socket, :id, id)
 
     push socket, "registered", %{"id": id}
-    {:no_reply, socket}
+    {:noreply, socket}
   end
 
-  def handle_in("connect", %{"peer_id": peer_id, "sender_id": sender_id}, socket) do
+  def handle_in("connect", %{"peer_id" => peer_id, "sender_id" => sender_id}, socket) do
+    Logger.debug "Connect Request #{peer_id}, #{sender_id}"
     send_to_peer(peer_id, "peer_connect", %{"peer_id": sender_id})
     {:noreply, socket}
   end
 
-  def handle_in("offer", %{"offer": offer, "peer_id": peer_id, "sender_id": sender_id}, socket) do
+  def handle_in("offer", %{"offer" => offer, "peer_id" => peer_id, "sender_id" => sender_id}, socket) do
+    Logger.debug "Offer Request #{inspect(offer)}, #{peer_id}, #{sender_id}"
     send_to_peer(peer_id, "offer", %{"offer": offer, "peer_id": sender_id})
     {:noreply, socket}
   end
 
-  def handle_in("answer", %{"answer": answer, "peer_id": peer_id, "sender_id": sender_id}, socket) do
+  def handle_in("answer", %{"answer" => answer, "peer_id" => peer_id, "sender_id" => sender_id}, socket) do
+    Logger.debug "Answer Request #{inspect(answer)}, #{peer_id}, #{sender_id}"
     send_to_peer(peer_id, "answer", %{"answer": answer, "peer_id": sender_id})
     {:noreply, socket}
   end
@@ -45,6 +49,7 @@ defmodule EphemeralShare.BrokerChannel do
       :not_found ->
         {:error, %{"reason": "No such client exists"}}
       peer_socket ->
+        Logger.debug "Pushing msg: #{inspect(msg)} to #{inspect(topic)} on #{inspect(peer_socket)}"
         push peer_socket, topic, msg
     end
   end

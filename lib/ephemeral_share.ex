@@ -19,6 +19,7 @@ defmodule EphemeralShare do
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: EphemeralShare.Supervisor]
     Supervisor.start_link(children, opts)
+    EphemeralShare.ClientMap.start_link
   end
 
   # Tell Phoenix to update the endpoint configuration

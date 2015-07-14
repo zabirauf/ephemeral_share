@@ -1,154 +1,9 @@
 /*jshint esnext: true*/
 
 import {Socket} from "phoenix";
-var Peer = require("simple-peer");
 
-class PeerCommunicationProtocol {
-    constructor(initiator, onDataReceived) {
-        this.id = null;
-        this.initiator = initiator;
-        this.peers = {};
-        this.onDataReceivedExternal = onDataReceived;
-
-        let socket = new Socket("/ws", {
-            logger: (kind, msg, data) => {console.log(`${kind}: ${msg}`, data);}
-        });
-
-        socket.connect();
-
-        socket.onClose(e => console.log("CLOSE", e));
-
-        this.chan = socket.chan("broker:match", {});
-
-        this.chan.join().receive("ok", () => console.log("Joined"))
-            .after(1000, () => console.log("Connection interuption"));
-
-        this.chan.onError(this.onWSError.bind(this));
-        this.chan.onClose(this.onWSClose.bind(this));
-        this.chan.on("registered", this.onWSRegistered.bind(this));
-
-        this.chan.push("register", {});
-    }
-
-    createRTCPeer(initiator, peer_id) {
-        return new RTCCommunication(
-            initiator,
-            (o) => { this.onRTCOfferCreated(peer_id, o);},
-            (a) => { this.onRTCAnswerCreated(peer_id, a);},
-            (d) => { this.onRTCDataReceived(peer_id, d);});
-    }
-
-    /* Web socket communication */
-    onWSError(event) {
-        console.log("WS: Error", e);
-    }
-
-    onWSClose(event) {
-        console.log("WS: Close", e);
-    }
-
-    onWSRegistered(msg) {
-        console.log("WS: Registered", msg);
-        this.id = msg.id;
-        this.chan.on("peer_connect", this.onWSPeerConnect.bind(this));
-        this.chan.on("offer", this.onWSOffer.bind(this));
-        this.chan.on("answer", this.onWSAnswer.bind(this));
-    }
-
-    onWSPeerConnect(msg) {
-        console.log("WS: Peer Connection", msg);
-        this.peers[msg.peer_id] = this.createRTCPeer(this.initiator, msg.peer_id);
-    }
-
-    onWSOffer(msg) {
-        console.log("WS: Got Offer", msg);
-        this.peers[msg.peer_id].signal(msg.offer);
-    }
-
-    onWSAnswer(msg) {
-        console.log("WS: Got Answer", msg);
-        this.peers[msg.peer_id].signal(msg.answer);
-    }
-
-    /* RTC communication */
-    onRTCOfferCreated(peer_id, offer) {
-        console.log(`RTC: Offer created ${peer_id}`, offer);
-        this.chan.push("offer", {offer: offer, peer_id: peer_id, sender_id: this.id});
-    }
-
-    onRTCAnswerCreated(peer_id, answer) {
-        console.log(`RTC: Answer created ${peer_id}`, answer);
-        this.chan.push("answer", {answer: answer, peer_id: peer_id, sender_id: this.id});
-    }
-
-    onRTCDataReceived(peer_id, data) {
-        console.log(`RTC: Data received ${peer_id}`);
-        this.onDataReceivedExternal(peer_id, data);
-    }
-
-    /* Other functions */
-    connect(peer_id) {
-        this.chan("connect", {peer_id: peer_id, sender_id: this.id});
-    }
-
-    send(peer_id, data) {
-        this.peers[peer_id].send(data);
-    }
-}
-
-class RTCCommunication {
-    constructor(initiator, onOfferCreated, onAnswerCreated, onDataReceived) {
-        this.peer = new Peer({initiator: initiator, trickle: false});
-        this.initiator = initiator;
-        this.onOfferCreated = onOfferCreated;
-        this.onAnswerCreated = onAnswerCreated;
-        this.onDataReceived = onDataReceived;
-
-        this.peer.on('error', this.onError.bind(this));
-        this.peer.on('signal', this.onSignal.bind(this));
-        this.peer.on('connect', this.onConnect.bind(this));
-        this.peer.on('data', this.onData.bind(this));
-    }
-
-    send(data) {
-        this.peer.send(data);
-    }
-
-    signal(data) {
-        this.peer.signal(data);
-    }
-
-    onError(error) {
-        console.log("RTC: Error", error);
-    }
-
-    onSignal(data) {
-        console.log("RTC: Data", data);
-        if(this.initiator) {
-            this.offer = data;
-            if(this.onOfferCreated) {
-                this.onOfferCreated(this.offer);
-            }
-        }
-        else {
-            this.answer = data;
-            if(this.onAnswerCreated) {
-                this.onAnswerCreated(this.answer);
-            }
-        }
-    }
-
-    onConnect() {
-        console.log("RTC: Connected");
-    }
-
-    onData(data) {
-        console.log("RTC: Data received");
-        if(this.onDataReceived) {
-            this.onDataReceived(data);
-        }
-    }
-}
+import {PeerCommunicationProtocol} from "./peer-communication";
+import {FileInfoStore} from "./file-share";
 
 class FileHandler extends React.Component {
 
@@ -192,7 +47,7 @@ class ItemsList extends React.Component {
 
     createItem(item, i) {
         return (
-            <ListItem key={i} data={item} dataNum={i} onDelete={this.props.onItemDelete.bind(this)} />
+                <ListItem disableSave={this.props.disableSave} key={i} data={item} dataNum={i} onDelete={this.props.onItemDelete.bind(this)} />
         );
     }
 
@@ -218,9 +73,37 @@ class ListItem extends React.Component {
         }
     }
 
+    onSave(event) {
+        console.log(`Download ${this.props.data.name}`);
+    }
+
     sizeInMb(bytes) {
         let mb = bytes / (1000*1000);
         return Math.round(mb*100)/100;
+    }
+
+    isSaveDisabled() {
+        if(this.props.disableSave !== undefined) {
+            return this.props.disableSave;
+        }
+
+        return false;
+    }
+
+    getFileAction() {
+        if(this.isSaveDisabled()) {
+            return (
+                    <a href="#!" className='secondary-content' onClick={this.onDelete.bind(this)}>
+                    <i className='material-icons'>delete</i>
+                    </a>);
+        }
+        else {
+            return (
+                    <a href="#!" className='secondary-content' onClick={this.onSave.bind(this)}>
+                    <i className='material-icons'>cloud_download</i>
+                    </a>
+            );
+        }
     }
 
     render() {
@@ -229,7 +112,7 @@ class ListItem extends React.Component {
                 <i className='material-icons circle'>insert_drive_file</i>  
                <span className='title'>{this.props.data.name}</span>
                 <p>Size: {this.sizeInMb(this.props.data.size)} MB</p>
-               <a href="#!" className='secondary-content' onClick={this.onDelete.bind(this)}><i className='material-icons'>delete</i></a>
+                {this.getFileAction()}
            </li>
         );
     }
@@ -239,17 +122,41 @@ class FileListItem extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = {items: []};
+        this.state = {items: []}; 
+    }
+
+    componentWillMount() {
+        if(this.props.store) {
+            this.props.store.addChangeListener(this.onStoreFileUpdated.bind(this));
+        }
+    }
+
+    componentWillUnmount() {
+        if(this.props.store) {
+            this.props.store.removeChangeListener(this.onStoreFileUpdated.bind(this));
+        }
+    }
+
+    onStoreFileUpdated(files) {
+        this.setState({items: files});
     }
 
     onFileDeleted(index) {
         this.state.items.splice(index, 1);
         this.setState({items: this.state.items});
+        this.filesUpdated(this.state.items);
     }
 
     onFileAdded(files) {
         let updated_items = this.mergeFileList(this.state.items, files);
         this.setState({items: updated_items});
+        this.filesUpdated(updated_items);
+    }
+
+    filesUpdated(files) {
+        if(this.props.onFilesUpdated) {
+            this.props.onFilesUpdated(files);
+        }
     }
 
     mergeFileList(agg, filelist) {
@@ -261,17 +168,25 @@ class FileListItem extends React.Component {
         return agg;
     }
 
+    fileDropDisabled() {
+        if(this.props.disableDrop) {
+            return this.props.disableDrop;
+        }
+
+        return false;
+    }
+
     render() {
         return (
             <div className='container'>
-                <div className='row'>
+                <div className='row' style={{display: (this.fileDropDisabled() ? "none":"block")}}>
                     <div className='col s12'>
                          <FileHandler onFileSelected={this.onFileAdded.bind(this)} />
                     </div>
                 </div>
                 <div className='row'>
                     <div className='col s12'>
-                        <ItemsList items={this.state.items} onItemDelete={this.onFileDeleted.bind(this)}/>
+                <ItemsList disableSave={!this.fileDropDisabled()} items={this.state.items} onItemDelete={this.onFileDeleted.bind(this)}/>
                     </div>
                 </div>
             </div>
@@ -281,11 +196,36 @@ class FileListItem extends React.Component {
 
 class App {
     static init() {
+        let getParams = App.getURLParams();
+        let isInitiator = getParams["peer_id"] === undefined;
+
+        let peerComm = new PeerCommunicationProtocol(
+            isInitiator,
+            null,
+            (pcp) => {
+                if(getParams["peer_id"]) {
+                    pcp.connect(getParams["peer_id"]);
+                }
+            },
+            (rtc) => {
+                console.log("Peer Connected", rtc);
+            });
+
+        let fileInfoStore = new FileInfoStore(peerComm, isInitiator);
 
         React.render(
-            <FileListItem />,
+                <FileListItem
+            onFilesUpdated={fileInfoStore.onFilesUpdated.bind(fileInfoStore)}
+            disableDrop={!isInitiator}
+            store={fileInfoStore} />,
             document.getElementById("react-container")
         );
+    }
+
+    static getURLParams() {
+        var queryDict = {};
+        location.search.substr(1).split("&").forEach(function(item) {queryDict[item.split("=")[0]] = item.split("=")[1]});
+        return queryDict;
     }
 }
 

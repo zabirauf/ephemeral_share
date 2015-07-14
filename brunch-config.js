@@ -52,5 +52,10 @@ exports.config = {
     react: {
         babel: true
     }
+  },
+
+  dependencies: {
+      "flux": "~2.0.3",
+      "react": "~0.13.3"
   }
 };

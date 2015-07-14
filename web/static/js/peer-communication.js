@@ -1,14 +1,23 @@
 /*jshint esnext: true*/
 
 import {Socket} from "phoenix";
-var Peer = require("simple-peer");
 
-class PeerCommunicationProtocol {
-    constructor(initiator, onDataReceived) {
+export var PeerCommunicationEvent = {
+    Connected: "connected-broker",
+    Data: "peer-data-received",
+    PeerConnected: "peer-connected"
+};
+
+export class PeerCommunicationProtocol extends EventEmitter {
+    constructor(initiator, onDataReceived, onConnected, onRTCConnected) {
+        super();
+
         this.id = null;
         this.initiator = initiator;
         this.peers = {};
         this.onDataReceivedExternal = onDataReceived;
+        this.onConnectedExternal = onConnected;
+        this.onRTCConnectedExternal = onRTCConnected;
 
         let socket = new Socket("/ws", {
             logger: (kind, msg, data) => {console.log(`${kind}: ${msg}`, data);}
@@ -20,14 +29,21 @@ class PeerCommunicationProtocol {
 
         this.chan = socket.chan("broker:match", {});
 
-        this.chan.join().receive("ok", () => console.log("Joined"))
+        this.chan.join().receive("ok", this.onWSJoined.bind(this))
             .after(1000, () => console.log("Connection interuption"));
 
         this.chan.onError(this.onWSError.bind(this));
         this.chan.onClose(this.onWSClose.bind(this));
-        this.chan.on("registered", this.onWSRegistered.bind(this));
+    }
 
-        this.chan.push("register", {});
+    addEventListener(event, callback) {
+        this.on(event, callback);
+        return this;
+    }
+
+    removeEventListener(event, callback) {
+        this.removeListener(event, callback);
+        return this;
     }
 
     createRTCPeer(initiator, peer_id) {
@@ -35,16 +51,24 @@ class PeerCommunicationProtocol {
             initiator,
             (o) => { this.onRTCOfferCreated(peer_id, o);},
             (a) => { this.onRTCAnswerCreated(peer_id, a);},
-            (d) => { this.onRTCDataReceived(peer_id, d);});
+            (d) => { this.onRTCDataReceived(peer_id, d);},
+            (c) => { this.onRTCConnected(peer_id, c);});
+    }
+
+    onWSJoined() {
+        console.log("WS: Joined");
+
+        this.chan.on("registered", this.onWSRegistered.bind(this));
+        this.chan.push("register", {});
     }
 
     /* Web socket communication */
     onWSError(event) {
-        console.log("WS: Error", e);
+        console.log("WS: Error", event);
     }
 
     onWSClose(event) {
-        console.log("WS: Close", e);
+        console.log("WS: Close", event);
     }
 
     onWSRegistered(msg) {
@@ -53,6 +77,12 @@ class PeerCommunicationProtocol {
         this.chan.on("peer_connect", this.onWSPeerConnect.bind(this));
         this.chan.on("offer", this.onWSOffer.bind(this));
         this.chan.on("answer", this.onWSAnswer.bind(this));
+
+        this.emit(PeerCommunicationEvent.Connected, this);
+
+        if(this.onConnectedExternal) {
+            this.onConnectedExternal(this);
+        }
     }
 
     onWSPeerConnect(msg) {
@@ -83,26 +113,52 @@ class PeerCommunicationProtocol {
 
     onRTCDataReceived(peer_id, data) {
         console.log(`RTC: Data received ${peer_id}`);
-        this.onDataReceivedExternal(peer_id, data);
+
+        this.emit(PeerCommunicationEvent.Data, {peer_id: peer_id, data: data});
+
+        if(this.onDataReceivedExternal) {
+            this.onDataReceivedExternal(peer_id, data);
+        }
+    }
+
+    onRTCConnected(peer_id, rtcClient) {
+        console.log(`RTC: Connected ${peer_id}`);
+
+        this.emit(PeerCommunicationEvent.PeerConnected, {peer_id: peer_id, peer_comm: this});
+
+        if(this.onRTCConnectedExternal) {
+            this.onRTCConnectedExternal(rtcClient);
+        }
     }
 
     /* Other functions */
     connect(peer_id) {
-        this.chan("connect", {peer_id: peer_id, sender_id: this.id});
+        this.peers[peer_id] = this.createRTCPeer(this.initiator, peer_id);
+        this.chan.push("connect", {peer_id: peer_id, sender_id: this.id});
     }
 
     send(peer_id, data) {
         this.peers[peer_id].send(data);
     }
-}
 
-class RTCCommunication {
-    constructor(initiator, onOfferCreated, onAnswerCreated, onDataReceived) {
-        this.peer = new Peer({initiator: initiator, trickle: false});
+    sendToAllConnectedPeers(data) {
+        for(let peer_id in this.peers) {
+            if(this.peers[peer_id] && this.peers[peer_id].isConnected) {
+                this.peers[peer_id].send(data);
+            }
+        }
+    }
+};
+
+export class RTCCommunication {
+    constructor(initiator, onOfferCreated, onAnswerCreated, onDataReceived, onRTCConnected) {
+        this.peer = new window.SimplePeer({initiator: initiator, trickle: false});
         this.initiator = initiator;
         this.onOfferCreated = onOfferCreated;
         this.onAnswerCreated = onAnswerCreated;
         this.onDataReceived = onDataReceived;
+        this.onRTCConnected = onRTCConnected;
+        this.isConnected = false;
 
         this.peer.on('error', this.onError.bind(this));
         this.peer.on('signal', this.onSignal.bind(this));
@@ -140,6 +196,10 @@ class RTCCommunication {
 
     onConnect() {
         console.log("RTC: Connected");
+        this.isConnected = true;
+        if(this.onRTCConnected) {
+            this.onRTCConnected(this);
+        }
     }
 
     onData(data) {
@@ -148,7 +208,4 @@ class RTCCommunication {
             this.onDataReceived(data);
         }
     }
-}
-
-
-export default PeerCommunicationProtocol;
+};

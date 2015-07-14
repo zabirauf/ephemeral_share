@@ -1,15 +1,17 @@
 {
-  "repository": {
-  },
+  "repository": {},
   "dependencies": {
-    "brunch": "^1.8.1",
+    "alt": "^0.17.1",
     "babel-brunch": "^5.1.1",
+    "brunch": "^1.8.1",
     "clean-css-brunch": ">= 1.0 < 1.8",
     "css-brunch": ">= 1.0 < 1.8",
+    "flux": "^2.0.3",
     "javascript-brunch": ">= 1.0 < 1.8",
+    "react": "^0.13.3",
+    "react-brunch": "^1.0.9",
     "sass-brunch": "^1.8.10",
-    "uglify-js-brunch": ">= 1.0 < 1.8",
-    "react-brunch" : "^1.0.9",
-    "simple-peer": "~5.11.4"
+    "simple-peer": "^5.11.4",
+    "uglify-js-brunch": ">= 1.0 < 1.8"
   }
 }
