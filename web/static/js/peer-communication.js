@@ -144,7 +144,8 @@ export class PeerCommunicationProtocol extends EventEmitter {
     sendToAllConnectedPeers(data) {
         for(let peer_id in this.peers) {
             if(this.peers[peer_id] && this.peers[peer_id].isConnected) {
-                this.peers[peer_id].send(data);
+                // Call it in an anonymous function so any failure does not effect sending to other peers
+                (() => this.peers[peer_id].send(data))();
             }
         }
     }

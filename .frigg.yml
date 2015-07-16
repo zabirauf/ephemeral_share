@@ -1,0 +1,3 @@
+tasks:
+  - npm install
+  - brunch build

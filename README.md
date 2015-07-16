@@ -1,4 +1,6 @@
 # EphemeralShare
+[![Build Status](https://semaphoreci.com/api/v1/projects/3afec371-4990-42a5-9d1f-9da212e602f1/485062/badge.svg)](https://semaphoreci.com/zabirauf/ephemeral_share)
+[![Build status](https://ci.frigg.io/badges/zabirauf/ephemeral_share/)]
 
 To start your new Phoenix application:
 
