@@ -19,4 +19,11 @@ export class AppDispatcher {
             action: action
         });
     }
+
+    static handleStoreAction(action) {
+        dispatcher.dispatch({
+            source: 'STORE_ACTION',
+            action: action
+        });
+    }
 }

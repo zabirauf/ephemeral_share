@@ -5,18 +5,24 @@ import {Socket} from "phoenix";
 import {PeerCommunicationProtocol} from "./lib/peercommunication";
 import {FileInfoStore} from "./stores/fileinfostore";
 import {FileListItem} from "./components/filelistitem";
+import {FileTransferManager} from "./lib/filetransfermanager";
 
 class App {
     static init() {
         let getParams = App.getURLParams();
-        let isInitiator = getParams["peer_id"] === undefined;
+        let isInitiator = getParams.peer_id === undefined;
+
+        let peer_id = null;
+        if(getParams.peer_id) {
+            peer_id = getParams.peer_id;
+        }
 
         let peerComm = new PeerCommunicationProtocol(
             isInitiator,
             null,
             (pcp) => {
-                if(getParams["peer_id"]) {
-                    pcp.connect(getParams["peer_id"]);
+                if(peer_id) {
+                    pcp.connect(peer_id);
                 }
             },
             (rtc) => {
@@ -24,6 +30,11 @@ class App {
             });
 
         FileInfoStore.initialize(peerComm, isInitiator);
+        FileTransferManager.initialize(peerComm, peer_id);
+
+        // After the store dependency FileTransferManager is created we call the initialize on store instance
+        // TODO: Have a better way instead of a circular dependency
+        FileInfoStore.instance().initialize();
 
         React.render(
                 <FileListItem

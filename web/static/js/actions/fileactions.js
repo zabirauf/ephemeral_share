@@ -18,4 +18,11 @@ export class FileActions {
             id: id
         });
     }
+
+    static download(id) {
+        AppDispatcher.handleViewAction({
+            actionType: FileConstants.FILE_DOWNLOAD,
+            id: id,
+        });
+    }
 }

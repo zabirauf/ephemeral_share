@@ -10,7 +10,12 @@ export class ItemsList extends React.Component {
 
     createItem(item, i) {
         return (
-                <ListItem disableSave={this.props.disableSave} key={i} data={item} dataNum={i} onDelete={this.props.onItemDelete.bind(this)} />
+                <ListItem disableSave={this.props.disableSave}
+            key={i}
+            data={item}
+            dataNum={i}
+            onDelete={this.props.onItemDelete}
+            onSave={this.props.onItemSave} />
         );
     }
 

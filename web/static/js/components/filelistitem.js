@@ -28,6 +28,11 @@ export class FileListItem extends React.Component {
         FileActions.destroy(index);
     }
 
+    onFileDownload(index) {
+        console.log(`Download ${index}`);
+        FileActions.download(index);
+    }
+
     onFileAdded(files) {
         for(let i = 0;i < files.length; i++) {
             FileActions.create(files[i]);
@@ -52,7 +57,7 @@ export class FileListItem extends React.Component {
                 </div>
                 <div className='row'>
                     <div className='col s12'>
-                <ItemsList disableSave={!this.fileDropDisabled()} items={this.state.items} onItemDelete={this.onFileDeleted.bind(this)}/>
+                <ItemsList disableSave={!this.fileDropDisabled()} items={this.state.items} onItemDelete={this.onFileDeleted.bind(this)} onItemSave={this.onFileDownload.bind(this)}/>
                     </div>
                 </div>
             </div>

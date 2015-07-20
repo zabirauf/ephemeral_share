@@ -3,6 +3,8 @@
 import {PeerCommunicationEvent, PeerCommunicationProtocol} from "../lib/peercommunication";
 import FileConstants from "../constants/fileconstants";
 import {AppDispatcher} from "../appdispatcher";
+import {FileTransferManager} from "../lib/filetransfermanager";
+import {FileTransferActions} from "../actions/filetransferaction";
 
 const  UPDATE_FILE_EVENT = "file-update-event";
 
@@ -41,6 +43,11 @@ export class FileInfoStore extends EventEmitter {
         }
     }
 
+    initialize() {
+        FileTransferManager.instance().addOnFileDownloadCompleteListener(this.onFileDownloadComplete.bind(this));
+        FileTransferManager.instance().addOnFileDownloadProgressListener(this.onFileDownloadProgress.bind(this));
+    }
+
     dispatchAction({source: source, action: action}) {
         switch(action.actionType) {
         case FileConstants.FILE_CREATE:
@@ -52,13 +59,33 @@ export class FileInfoStore extends EventEmitter {
             this.removeFile(action.id);
             this.notifyUpdatedFiles(this.files);
             break;
+
+        case FileConstants.FILE_DOWNLOAD:
+            let index = action.id;
+            this.callAsync(this.downloadFile.bind(this, index));
+            break;
         }
 
         return true;
     }
 
+    callAsync(func) {
+        setTimeout(func, 0);
+    }
+
     getAll() {
         return this.files;
+    }
+
+    onFileDownloadComplete({file: file, blob: fileBlob, correlationId: index}) {
+        this.files[index].downloadedBlob = fileBlob;
+        this.files[index].downloadUrl = window.URL.createObjectURL(fileBlob);
+        this.notifyUpdatedFiles(this.files);
+    }
+
+    onFileDownloadProgress({chunk: chunk, total: total, correlationId: index}) {
+        this.files[index].downloadProgress = Math.ceil(chunk/total * 100);
+        this.notifyUpdatedFiles(this.files);
     }
 
     onPeerConnected({peer_id: peer_id, peer_comm: p}) {
@@ -77,6 +104,11 @@ export class FileInfoStore extends EventEmitter {
         this.files.splice(index, 1);
         this.peerComm.sendToAllConnectedPeers(this.getDataForPeer(this.files));
         this.notifyUpdatedFiles(this.files);
+    }
+
+    downloadFile(index) {
+        let file = this.files[index];
+        FileTransferActions.download(file, index);
     }
 
     getDataForPeer(files) {
@@ -99,9 +131,9 @@ export class FileInfoStore extends EventEmitter {
 
     onPeerFilesReceived(files) {
         this.files.splice(0, this.files.length);
-        this.files.concat(files);
+        this.files = this.files.concat(files);
 
-        this.notifyUpdatedFiles(files);
+        this.notifyUpdatedFiles(this.files);
     }
 
     notifyUpdatedFiles(files) {

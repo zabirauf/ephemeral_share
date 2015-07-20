@@ -1,18 +1,75 @@
 /*jshint esnext: true*/
 
-import {PeerCommunicationEvent, PeerCommunicationProtocol} from "./peer-communication";
+import {PeerCommunicationEvent, PeerCommunicationProtocol} from "./peercommunication";
 import {FileTransferSender} from "./filetransfersender";
 import {FileTransferReceiver} from "./filetransferreceiver";
+import {AppDispatcher} from "../appdispatcher";
+import {FileInfoStore} from "../stores/fileinfostore";
+import FileTransferConstants from "../constants/filetransferconstants";
+
+let _instance = null;
 
 export class FileTransferManager extends EventEmitter {
-    constructor(peerComm, fileInfoStore) {
+
+    static instance() {
+        return _instance;
+    }
+
+    static initialize(peerComm, peer_id) {
+        if(_instance === null) {
+            _instance = new FileTransferManager(peerComm, peer_id);
+        }
+    }
+
+    constructor(peerComm, peer_id) {
         super();
 
+        // Registering the store with dispatcher
+        this.dispatcherIndex = AppDispatcher.register(this.dispatchAction.bind(this));
+
         this.peerComm = peerComm;
-        this.fileInfoStore = fileInfoStore;
         this.files = [];
+        this.peer_id = peer_id;
         this.peerComm.addEventListener(PeerCommunicationEvent.Data, this.onPeerDataReceived.bind(this));
-        this.fileInfoStore.addChangeListener(this.onFilesUpdated.bind(this));
+        FileInfoStore.instance().addChangeListener(this.onFilesUpdated.bind(this));
+    }
+
+    dispatchAction({source: source, action: action}) {
+        switch(action.actionType) {
+        case FileTransferConstants.TRANSFER_FILE_DOWNLOAD:
+            this.downloadFile(
+                this.peer_id,
+                action.file,
+                this.onFileDownloaded.bind(this),
+                this.onFileDownloadProgress.bind(this),
+                action.correlationId);
+        }
+    }
+
+    addOnFileDownloadCompleteListener(callback) {
+        this.on(FileTransferConstants.TRANSFER_FILE_DOWNLOAD_COMPLETE, callback);
+    }
+
+    removeOnFileDownloadCompleteListener(callback) {
+        this.removeListener(FileTransferConstants.TRANSFER_FILE_DOWNLOAD_COMPLETE, callback);
+    }
+
+    addOnFileDownloadProgressListener(callback) {
+        this.on(FileTransferConstants.TRANSFER_FILE_DOWNLOAD_PROGRESS, callback);
+    }
+
+    removeOnFileDownloadProgressListener(callback) {
+        this.removeListener(FileTransferConstants.TRANSFER_FILE_DOWNLOAD_PROGRESS, callback);
+    }
+
+    onFileDownloadProgress(f) {
+        console.log("File download progress", f);
+        this.emit(FileTransferConstants.TRANSFER_FILE_DOWNLOAD_PROGRESS, f);
+    }
+
+    onFileDownloaded(f) {
+        console.log("File Downloaded", f);
+        this.emit(FileTransferConstants.TRANSFER_FILE_DOWNLOAD_COMPLETE, f);
     }
 
     onPeerDataReceived({peer_id: peer_id, data: data}) {
@@ -36,9 +93,10 @@ export class FileTransferManager extends EventEmitter {
         }
     }
 
-    downloadFile(peer_id, file, callback) {
-        let downloader = new FileTransferReceiver(this.peerComm, peer_id, file);
+    downloadFile(peer_id, file, callback, progressCallback, correlationId) {
+        let downloader = new FileTransferReceiver(this.peerComm, peer_id, file, correlationId);
         downloader.addOnCompleteListener(callback);
+        downloader.addOnProgressListener(progressCallback);
         downloader.download();
     }
 }
