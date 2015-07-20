@@ -4,6 +4,7 @@ export class ListItem extends React.Component {
 
     constructor(props) {
         super(props);
+        this.state = {downloadInProgress: false};
     }
 
     onDelete(event) {
@@ -15,6 +16,7 @@ export class ListItem extends React.Component {
     onSave(event) {
         console.log(`Download ${this.props.data.name}`);
         if(this.props.onSave) {
+            this.setState({downloadInProgress: true});
             this.props.onSave(this.props.dataNum);
         }
     }
@@ -46,13 +48,15 @@ export class ListItem extends React.Component {
                     </a>
             );
         }
-        else {
+        else if (!this.state.downloadInProgress) {
             return (
                     <a href="#!" className='secondary-content' onClick={this.onSave.bind(this)}>
                     <i className='material-icons'>cloud_download</i>
                     </a>
             );
         }
+
+        return ``;
     }
 
     getFileDownloadProgress() {

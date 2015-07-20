@@ -1,11 +1,12 @@
 /*jshint esnext: true*/
 
-import {PeerCommunicationEvent, PeerCommunicationProtocol} from "./peercommunication";
+import {PeerCommunicationProtocol} from "./peercommunication";
 import {FileTransferSender} from "./filetransfersender";
 import {FileTransferReceiver} from "./filetransferreceiver";
 import {AppDispatcher} from "../appdispatcher";
 import {FileInfoStore} from "../stores/fileinfostore";
 import FileTransferConstants from "../constants/filetransferconstants";
+import PeerCommunicationConstants from "../constants/PeerCommunicationConstants";
 
 let _instance = null;
 
@@ -15,9 +16,9 @@ export class FileTransferManager extends EventEmitter {
         return _instance;
     }
 
-    static initialize(peerComm, peer_id) {
+    static initialize(peer_id) {
         if(_instance === null) {
-            _instance = new FileTransferManager(peerComm, peer_id);
+            _instance = new FileTransferManager(PeerCommunicationProtocol.instance(), peer_id);
         }
     }
 
@@ -30,7 +31,7 @@ export class FileTransferManager extends EventEmitter {
         this.peerComm = peerComm;
         this.files = [];
         this.peer_id = peer_id;
-        this.peerComm.addEventListener(PeerCommunicationEvent.Data, this.onPeerDataReceived.bind(this));
+        this.peerComm.addEventListener(PeerCommunicationConstants.PEER_DATA, this.onPeerDataReceived.bind(this));
         FileInfoStore.instance().addChangeListener(this.onFilesUpdated.bind(this));
     }
 

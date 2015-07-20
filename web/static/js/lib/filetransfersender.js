@@ -3,7 +3,7 @@
 export class FileTransferSender extends EventEmitter {
     constructor(peerComm, peer_id, file, id) {
         super();
-        this.chunkSize = 16 * 1024;
+        this.chunkSize = 32 * 1024;
 
         this.peerComm = peerComm;
         this.peer_id = peer_id;
@@ -52,6 +52,6 @@ export class FileTransferSender extends EventEmitter {
     }
 
     ab2str(buf) {
-        return String.fromCharCode.apply(null, new Uint16Array(buf));
+        return String.fromCharCode.apply(null, new Uint8Array(buf));
     }
 }

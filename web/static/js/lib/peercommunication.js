@@ -1,14 +1,22 @@
 /*jshint esnext: true*/
 
 import {Socket} from "phoenix";
+import PeerCommunicationConstants from "../constants/PeerCommunicationConstants";
 
-export var PeerCommunicationEvent = {
-    Connected: "connected-broker",
-    Data: "peer-data-received",
-    PeerConnected: "peer-connected"
-};
+let _instance = null;
 
 export class PeerCommunicationProtocol extends EventEmitter {
+
+    static instance() {
+        return _instance;
+    }
+
+    static initialize(initiator, onDataReceived, onConnected, onRTCConnected) {
+        if(_instance === null) {
+            _instance = new PeerCommunicationProtocol(initiator, onDataReceived, onConnected, onRTCConnected);
+        }
+    }
+
     constructor(initiator, onDataReceived, onConnected, onRTCConnected) {
         super();
 
@@ -78,7 +86,7 @@ export class PeerCommunicationProtocol extends EventEmitter {
         this.chan.on("offer", this.onWSOffer.bind(this));
         this.chan.on("answer", this.onWSAnswer.bind(this));
 
-        this.emit(PeerCommunicationEvent.Connected, this);
+        this.emit(PeerCommunicationConstants.CONNECTED, this);
 
         if(this.onConnectedExternal) {
             this.onConnectedExternal(this);
@@ -114,7 +122,7 @@ export class PeerCommunicationProtocol extends EventEmitter {
     onRTCDataReceived(peer_id, data) {
         console.log(`RTC: Data received ${peer_id}`);
 
-        this.emit(PeerCommunicationEvent.Data, {peer_id: peer_id, data: data});
+        this.emit(PeerCommunicationConstants.PEER_DATA, {peer_id: peer_id, data: data});
 
         if(this.onDataReceivedExternal) {
             this.onDataReceivedExternal(peer_id, data);
@@ -124,7 +132,7 @@ export class PeerCommunicationProtocol extends EventEmitter {
     onRTCConnected(peer_id, rtcClient) {
         console.log(`RTC: Connected ${peer_id}`);
 
-        this.emit(PeerCommunicationEvent.PeerConnected, {peer_id: peer_id, peer_comm: this});
+        this.emit(PeerCommunicationConstants.PEER_CONNECTED, {peer_id: peer_id, peer_comm: this});
 
         if(this.onRTCConnectedExternal) {
             this.onRTCConnectedExternal(rtcClient);
@@ -148,6 +156,10 @@ export class PeerCommunicationProtocol extends EventEmitter {
                 (() => this.peers[peer_id].send(data))();
             }
         }
+    }
+
+    getId() {
+        return this.id;
     }
 };
 

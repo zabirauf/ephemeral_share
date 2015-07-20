@@ -17,7 +17,7 @@ class App {
             peer_id = getParams.peer_id;
         }
 
-        let peerComm = new PeerCommunicationProtocol(
+        PeerCommunicationProtocol.initialize(
             isInitiator,
             null,
             (pcp) => {
@@ -29,8 +29,8 @@ class App {
                 console.log("Peer Connected", rtc);
             });
 
-        FileInfoStore.initialize(peerComm, isInitiator);
-        FileTransferManager.initialize(peerComm, peer_id);
+        FileInfoStore.initialize(isInitiator);
+        FileTransferManager.initialize(peer_id);
 
         // After the store dependency FileTransferManager is created we call the initialize on store instance
         // TODO: Have a better way instead of a circular dependency

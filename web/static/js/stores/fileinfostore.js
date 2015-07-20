@@ -1,10 +1,11 @@
 /*jshint esnext: true*/
 
-import {PeerCommunicationEvent, PeerCommunicationProtocol} from "../lib/peercommunication";
+import {PeerCommunicationProtocol} from "../lib/peercommunication";
 import FileConstants from "../constants/fileconstants";
 import {AppDispatcher} from "../appdispatcher";
 import {FileTransferManager} from "../lib/filetransfermanager";
 import {FileTransferActions} from "../actions/filetransferaction";
+import PeerCommunicationConstants from "../constants/PeerCommunicationConstants";
 
 const  UPDATE_FILE_EVENT = "file-update-event";
 
@@ -19,7 +20,7 @@ export class FileInfoStore extends EventEmitter {
 
     static initialize(peerComm, isInitiator) {
         if(this.instance() === null) {
-            _instance = new FileInfoStore(peerComm, isInitiator);
+            _instance = new FileInfoStore(PeerCommunicationProtocol.instance(), isInitiator);
         }
     }
 
@@ -36,10 +37,10 @@ export class FileInfoStore extends EventEmitter {
 
         // The initiator only sends data and is not bothered about receiving and reciprocal for the client peers
         if(this.isInitiator) {
-            this.peerComm.addEventListener(PeerCommunicationEvent.PeerConnected, this.onPeerConnected.bind(this));
+            this.peerComm.addEventListener(PeerCommunicationConstants.PEER_CONNECTED, this.onPeerConnected.bind(this));
         }
         else {
-            this.peerComm.addEventListener(PeerCommunicationEvent.Data, this.onPeerDataReceived.bind(this));
+            this.peerComm.addEventListener(PeerCommunicationConstants.PEER_DATA, this.onPeerDataReceived.bind(this));
         }
     }
 
@@ -123,17 +124,35 @@ export class FileInfoStore extends EventEmitter {
     }
 
     onPeerDataReceived({peer_id: peer_id, data: data}) {
-        console.log(`Peer Data Received from ${peer_id}`, data);
+        console.log(`FileInfoStore: Peer Data Received from ${peer_id}`);
         if(data.type === "files") {
             this.onPeerFilesReceived(data.data);
         }
     }
 
     onPeerFilesReceived(files) {
-        this.files.splice(0, this.files.length);
-        this.files = this.files.concat(files);
+        this.files = this.mergeFileInformation(this.files, files);
 
         this.notifyUpdatedFiles(this.files);
+    }
+
+    mergeFileInformation(filesToMergeTo, filesToMerge) {
+        let files = [];
+
+        for(let file of filesToMerge) {
+            let found = filesToMergeTo.filter((f) => {
+                return f.name === file.name && f.size === file.size && f.downloadUrl;
+            });
+
+            if(found && found.length > 0) {
+                files.push(found[0]);
+            }
+            else {
+                files.push(file);
+            }
+        }
+
+        return files;
     }
 
     notifyUpdatedFiles(files) {
