@@ -7,7 +7,7 @@ defmodule EphemeralShare.ClientMap do
   end
 
   def add_client(key, socket) do
-    Logger.debug "ClientMap: Add: #{key}, #{inspect(socket)}"
+    Logger.debug "ClientMap: Add: #{key}"
     Agent.update(__MODULE__, fn(h) ->
       Dict.put(h, key, socket)
     end)
@@ -18,12 +18,12 @@ defmodule EphemeralShare.ClientMap do
     value = Agent.get(__MODULE__, fn(h) ->
       Dict.get(h, key, :not_found)
     end)
-    Logger.debug "ClientMap: Get: End: #{inspect(value)}"
 
     value
   end
 
   def remove_client(key) do
+    Logger.debug "ClientMap: Delete: #{key}"
     Agent.get_and_update(__MODULE__, fn(h) ->
       {Dict.get(h, key, :not_found), Dict.delete(h, key)}
     end)

@@ -3,7 +3,7 @@
 export class FileTransferSender extends EventEmitter {
     constructor(peerComm, peer_id, file, id) {
         super();
-        this.chunkSize = 32 * 1024;
+        this.chunkSize = 16 * 1024;
 
         this.peerComm = peerComm;
         this.peer_id = peer_id;

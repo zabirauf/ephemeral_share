@@ -37,8 +37,6 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.0/js/materialize.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/EventEmitter/4.2.11/EventEmitter.js"></script>
     <script src="https://fb.me/react-0.13.3.js"></script>
-    <!-- P2P Stuff -->
-    <script src="http://cdn.peerjs.com/0.3/peer.js"></script>
 
     <!-- Application -->
     <script type="text/javascript" src="<%= static_path(@conn, "/js/app.js") %>"></script>

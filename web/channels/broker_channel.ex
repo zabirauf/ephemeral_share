@@ -28,7 +28,13 @@ defmodule EphemeralShare.BrokerChannel do
 
   def handle_in("connect", %{"peer_id" => peer_id, "sender_id" => sender_id}, socket) do
     Logger.debug "Connect Request #{peer_id}, #{sender_id}"
-    send_to_peer(peer_id, "peer_connect", %{"peer_id": sender_id})
+
+    case send_to_peer(peer_id, "peer_connect", %{"peer_id": sender_id}) do
+      {:error, _} ->
+        push socket, "error_connect", %{"id": peer_id}
+      :ok ->
+        Logger.debug "Sent peer connect request to #{peer_id} from #{sender_id}"
+    end
     {:noreply, socket}
   end
 

@@ -13,13 +13,13 @@ defmodule EphemeralShare do
       worker(EphemeralShare.Repo, []),
       # Here you could define other workers and supervisors as children
       # worker(EphemeralShare.Worker, [arg1, arg2, arg3]),
+      worker(EphemeralShare.ClientMap, []),
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: EphemeralShare.Supervisor]
     Supervisor.start_link(children, opts)
-    EphemeralShare.ClientMap.start_link
   end
 
   # Tell Phoenix to update the endpoint configuration

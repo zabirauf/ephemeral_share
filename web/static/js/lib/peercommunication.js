@@ -82,6 +82,7 @@ export class PeerCommunicationProtocol extends EventEmitter {
     onWSRegistered(msg) {
         console.log("WS: Registered", msg);
         this.id = msg.id;
+        this.chan.on("error_connect", this.onWSPeerErrorConnect.bind(this));
         this.chan.on("peer_connect", this.onWSPeerConnect.bind(this));
         this.chan.on("offer", this.onWSOffer.bind(this));
         this.chan.on("answer", this.onWSAnswer.bind(this));
@@ -91,6 +92,11 @@ export class PeerCommunicationProtocol extends EventEmitter {
         if(this.onConnectedExternal) {
             this.onConnectedExternal(this);
         }
+    }
+
+    onWSPeerErrorConnect(msg) {
+        console.log("WS: Peer Connect Error", msg);
+        this.emit(PeerCommunicationConstants.PEER_DOES_NOT_EXIST, msg);
     }
 
     onWSPeerConnect(msg) {
@@ -152,8 +158,16 @@ export class PeerCommunicationProtocol extends EventEmitter {
     sendToAllConnectedPeers(data) {
         for(let peer_id in this.peers) {
             if(this.peers[peer_id] && this.peers[peer_id].isConnected) {
-                // Call it in an anonymous function so any failure does not effect sending to other peers
-                (() => this.peers[peer_id].send(data))();
+                // Call it in an async way so any failure does not effect sending to other peers
+                setTimeout(() => {
+                    let peer = this.peers[peer_id];
+                    if(peer.isPeerConnected()) {
+                        peer.send(data);
+                    }
+                    else {
+                        delete this.peers[peer_id];
+                    }
+                }, 0);
             }
         }
     }
@@ -213,6 +227,10 @@ export class RTCCommunication {
         if(this.onRTCConnected) {
             this.onRTCConnected(this);
         }
+    }
+
+    isPeerConnected() {
+        return this.peer.connected;
     }
 
     onData(data) {

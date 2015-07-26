@@ -2,6 +2,7 @@
 /_build
 /deps
 /*.ez
+.tern-port
 
 # Generate on crash by the VM
 erl_crash.dump

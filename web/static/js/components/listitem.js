@@ -76,7 +76,7 @@ export class ListItem extends React.Component {
         return (
            <li className='collection-item avatar'>
                 <i className='material-icons circle'>insert_drive_file</i>  
-               <span className='title'>{this.props.data.name}</span>
+               <span className='title truncate'>{this.props.data.name}</span>
                 <p>Size: {this.sizeInMb(this.props.data.size)} MB</p>
                 {this.getFileDownloadProgress()}
                 {this.getFileAction()}

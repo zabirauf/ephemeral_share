@@ -18,7 +18,7 @@ export class FileInfoStore extends EventEmitter {
         return _instance;
     }
 
-    static initialize(peerComm, isInitiator) {
+    static initialize(isInitiator) {
         if(this.instance() === null) {
             _instance = new FileInfoStore(PeerCommunicationProtocol.instance(), isInitiator);
         }
