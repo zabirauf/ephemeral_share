@@ -1,6 +1,7 @@
 # Mix artifacts
 /_build
 /deps
+/rel
 /*.ez
 .tern-port
 
