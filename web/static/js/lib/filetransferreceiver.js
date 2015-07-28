@@ -5,6 +5,11 @@ import PeerCommunicationConstants from "../constants/PeerCommunicationConstants"
 
 let FILE_TRANSFER_PROGRESS = "file_transfer_progress";
 
+/**
+ * A file transfer receiver responsible for receiving data of a particular file
+ * from the peer and combine it into a buffer. Once the download is complete
+ * it emits the event of file download complete.
+ */
 export class FileTransferReceiver extends EventEmitter {
     constructor(peerComm, peer_id, fileInfo, receiverId) {
         super();
@@ -36,6 +41,9 @@ export class FileTransferReceiver extends EventEmitter {
         }
     }
 
+    /**
+     * Process file chunks and once the donwload is complete emits the necessary event
+     */
     processFileChunk({transfer_id: transfer_id, chunkNumber: chunkNum, totalChunks: totalChunks, data: data}) {
 
         console.log(`Processing file chunk ${transfer_id}, ${chunkNum}/${totalChunks}, length: ${data.length}`);
@@ -55,11 +63,18 @@ export class FileTransferReceiver extends EventEmitter {
         }
     }
 
+    /**
+     * Removes the resources held by this. Should be called after the download is complete
+     */
     destructResources() {
         this.peerComm.removeEventListener(PeerCommunicationConstants.PEER_DATA, this.onPeerDataReceived.bind(this));
         this.receivedBuffer = null;
     }
 
+    /**
+     * Checks if all the chunks has been downloaded by seeing if any of them is
+     * undefined or not
+     */
     allChunksDownloaded() {
         for(let i=this.receivedBuffer-1;i>=0;i--) {
             if(!this.receivedBuffer[i]) {
@@ -78,22 +93,37 @@ export class FileTransferReceiver extends EventEmitter {
         this.receivedBuffer[chunkNumber] = data;
     }
 
+    /**
+     * Adds a listener for the file transfer progress
+     */
     addOnProgressListener(callback) {
         this.on(FILE_TRANSFER_PROGRESS, callback);
     }
 
+    /**
+     * Removes listener for the file transfer progress
+     */
     removeOnProgressListener(callback) {
         this.removeListener(FILE_TRANSFER_PROGRESS, callback);
     }
 
+    /**
+     * Adds a listener for the file transfer complete
+     */
     addOnCompleteListener(callback) {
         this.on(this.fileTransferCompleteEvent, callback);
     }
 
+    /**
+     * Removes listener for the file transfer complete
+     */
     removeOnCompleteListener(callback) {
         this.removeListener(this.fileTransferCompleteEvent, callback);
     }
 
+    /**
+     * Converts the encoded string received from peer to array buffer
+     */
     str2ab(str) {
         var buf = new ArrayBuffer(str.length); // 1 bytes for each char
         var bufView = new Uint8Array(buf);
@@ -103,6 +133,9 @@ export class FileTransferReceiver extends EventEmitter {
         return buf;
     }
 
+    /**
+     * Generates a random identifier
+     */
     generateId() {
         let text = "";
         let possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
