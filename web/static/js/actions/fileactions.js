@@ -3,8 +3,14 @@
 import {AppDispatcher} from "../appdispatcher";
 import FileConstants from "../constants/fileconstants";
 
+/**
+ * Actions for file store
+ */
 export class FileActions {
 
+    /**
+     * Create a file
+     */
     static create(file) {
         AppDispatcher.handleViewAction({
             actionType: FileConstants.FILE_CREATE,
@@ -12,6 +18,9 @@ export class FileActions {
         });
     }
 
+    /**
+     * Remove a file
+     */
     static destroy(id) {
         AppDispatcher.handleViewAction({
             actionType: FileConstants.FILE_DESTROY,
@@ -19,6 +28,9 @@ export class FileActions {
         });
     }
 
+    /**
+     * Download the file
+     */
     static download(id) {
         AppDispatcher.handleViewAction({
             actionType: FileConstants.FILE_DOWNLOAD,

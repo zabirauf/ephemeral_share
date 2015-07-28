@@ -1,5 +1,8 @@
 /*jshint esnext: true*/
 
+/**
+ * The file sender, which slices up the file and sends it to the peer
+ */
 export class FileTransferSender extends EventEmitter {
     constructor(peerComm, peer_id, file, id) {
         super();
@@ -17,6 +20,9 @@ export class FileTransferSender extends EventEmitter {
         (() => this.transferChunk())();
     }
 
+    /**
+     * Transfer the chunk to the peer
+     */
     transferChunk() {
         if(this.chunkNum >= this.numberOfChunks) {
             return;
@@ -32,6 +38,9 @@ export class FileTransferSender extends EventEmitter {
         reader.readAsArrayBuffer(chunk);
     }
 
+    /**
+     * Send the chunk to the peer and once it is sent then move over to the next chunk
+     */
     sendReadChunkAndContinue(event) {
         let buffer = event.target.result;
 
@@ -51,6 +60,9 @@ export class FileTransferSender extends EventEmitter {
         this.transfer();
     }
 
+    /**
+     * Encodes the array buffer to string to send it over the wire
+     */
     ab2str(buf) {
         return String.fromCharCode.apply(null, new Uint8Array(buf));
     }

@@ -5,6 +5,10 @@ import PeerCommunicationConstants from "../constants/PeerCommunicationConstants"
 
 let _instance = null;
 
+/**
+ * A communication handler between all the peers and between the broker and this peer to
+ * get registered
+ */
 export class PeerCommunicationProtocol extends EventEmitter {
 
     static instance() {
@@ -79,6 +83,13 @@ export class PeerCommunicationProtocol extends EventEmitter {
         console.log("WS: Close", event);
     }
 
+    /**
+     * After register with the broker is successful, handle messages from the broker as follows
+     * error_connect: Error in connecting to peer
+     * peer_connect: Request to connect to a peer
+     * offer: Offer received from the connecting peer, should reply with answer
+     * answer: Answer received from the offer accepting peer.
+     */
     onWSRegistered(msg) {
         console.log("WS: Registered", msg);
         this.id = msg.id;
@@ -151,10 +162,16 @@ export class PeerCommunicationProtocol extends EventEmitter {
         this.chan.push("connect", {peer_id: peer_id, sender_id: this.id});
     }
 
+    /**
+     * Send `data` to connected peer with id `peer_id`
+     */
     send(peer_id, data) {
         this.peers[peer_id].send(data);
     }
 
+    /**
+     * Send `data` to all the connected peers
+     */
     sendToAllConnectedPeers(data) {
         for(let peer_id in this.peers) {
             if(this.peers[peer_id] && this.peers[peer_id].isConnected) {
@@ -177,6 +194,9 @@ export class PeerCommunicationProtocol extends EventEmitter {
     }
 };
 
+/**
+ * A handler for WebRTC communication with one peer
+ */
 export class RTCCommunication {
     constructor(initiator, onOfferCreated, onAnswerCreated, onDataReceived, onRTCConnected) {
         this.peer = new window.SimplePeer({initiator: initiator, trickle: false});

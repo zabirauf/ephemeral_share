@@ -12,6 +12,10 @@ const  UPDATE_FILE_EVENT = "file-update-event";
 // Using it to make it a singleton class
 let _instance = null;
 
+/**
+ * The flux store which handles all the file information including the
+ * blob associated with it once it downloads
+ */
 export class FileInfoStore extends EventEmitter {
 
     static instance() {
@@ -93,6 +97,9 @@ export class FileInfoStore extends EventEmitter {
         p.send(peer_id, this.getDataForPeer(this.files));
     }
 
+    /**
+     * Add a file to the list and send that information to all the connected peers
+     */
     addFile(file) {
         console.log("File added, sending to all peers", file);
         this.files.push(file);
@@ -100,6 +107,9 @@ export class FileInfoStore extends EventEmitter {
         this.notifyUpdatedFiles(this.files);
     }
 
+    /**
+     * Removes a file to the list and send that information to all connected peers
+     */
     removeFile(index) {
         console.log("File removed, sending to all peers", index);
         this.files.splice(index, 1);
@@ -107,6 +117,9 @@ export class FileInfoStore extends EventEmitter {
         this.notifyUpdatedFiles(this.files);
     }
 
+    /**
+     * Download the file
+     */
     downloadFile(index) {
         let file = this.files[index];
         FileTransferActions.download(file, index);
@@ -123,6 +136,10 @@ export class FileInfoStore extends EventEmitter {
         };
     }
 
+    /**
+     * Called when the data is received from the peer. In case of "files" type it updates
+     * the file information in the store
+     */
     onPeerDataReceived({peer_id: peer_id, data: data}) {
         console.log(`FileInfoStore: Peer Data Received from ${peer_id}`);
         if(data.type === "files") {
@@ -136,6 +153,10 @@ export class FileInfoStore extends EventEmitter {
         this.notifyUpdatedFiles(this.files);
     }
 
+    /**
+     * Merges file information with existing files, so that if a file is dowloaded before
+     * then that information is still retained
+     */
     mergeFileInformation(filesToMergeTo, filesToMerge) {
         let files = [];
 

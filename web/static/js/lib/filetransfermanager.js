@@ -10,6 +10,9 @@ import PeerCommunicationConstants from "../constants/PeerCommunicationConstants"
 
 let _instance = null;
 
+/**
+ * The file manager for downloading and send files requested by the peer
+ */
 export class FileTransferManager extends EventEmitter {
 
     static instance() {
@@ -47,18 +50,30 @@ export class FileTransferManager extends EventEmitter {
         }
     }
 
+    /**
+     * Adds a listener for the file transfer complete
+     */
     addOnFileDownloadCompleteListener(callback) {
         this.on(FileTransferConstants.TRANSFER_FILE_DOWNLOAD_COMPLETE, callback);
     }
 
+    /**
+     * Removes listener for the file transfer complete
+     */
     removeOnFileDownloadCompleteListener(callback) {
         this.removeListener(FileTransferConstants.TRANSFER_FILE_DOWNLOAD_COMPLETE, callback);
     }
 
+    /**
+     * Adds a listener for the file transfer progress
+     */
     addOnFileDownloadProgressListener(callback) {
         this.on(FileTransferConstants.TRANSFER_FILE_DOWNLOAD_PROGRESS, callback);
     }
 
+    /**
+     * Removes listener for the file transfer progress
+     */
     removeOnFileDownloadProgressListener(callback) {
         this.removeListener(FileTransferConstants.TRANSFER_FILE_DOWNLOAD_PROGRESS, callback);
     }
@@ -73,6 +88,10 @@ export class FileTransferManager extends EventEmitter {
         this.emit(FileTransferConstants.TRANSFER_FILE_DOWNLOAD_COMPLETE, f);
     }
 
+    /**
+     * Called when the data from peer is received. If the request type is "download" it
+     * initiates the upload of file
+     */
     onPeerDataReceived({peer_id: peer_id, data: data}) {
         let {type: type, data: payload} = data;
         if(type === "download") {
@@ -84,6 +103,9 @@ export class FileTransferManager extends EventEmitter {
         this.files = files;
     }
 
+    /**
+     * Start upload of the file
+     */
     startFileTransfer(peer_id, {name: name, transfer_id: id}) {
         let file = this.files.filter((f) => f.name === name);
         if(file && file.length > 0) {
@@ -94,6 +116,9 @@ export class FileTransferManager extends EventEmitter {
         }
     }
 
+    /**
+     * Download the file from the peer
+     */
     downloadFile(peer_id, file, callback, progressCallback, correlationId) {
         let downloader = new FileTransferReceiver(this.peerComm, peer_id, file, correlationId);
         downloader.addOnCompleteListener(callback);
