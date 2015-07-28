@@ -49,11 +49,19 @@ export class FileTransferReceiver extends EventEmitter {
         if(chunkNum === totalChunks-1 && this.allChunksDownloaded()){
             let receivedFile = new window.Blob(this.receivedBuffer);
             this.emit(this.fileTransferCompleteEvent, {file: this.fileInfo, blob: receivedFile, correlationId: this.receiverId});
+
+            // Remove any resources as the download is complete
+            this.destructResources();
         }
     }
 
+    destructResources() {
+        this.peerComm.removeEventListener(PeerCommunicationConstants.PEER_DATA, this.onPeerDataReceived.bind(this));
+        this.receivedBuffer = null;
+    }
+
     allChunksDownloaded() {
-        for(let i=0;i<this.receivedBuffer;i++) {
+        for(let i=this.receivedBuffer-1;i>=0;i--) {
             if(!this.receivedBuffer[i]) {
                 return false;
             }

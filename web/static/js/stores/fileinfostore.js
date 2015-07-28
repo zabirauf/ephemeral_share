@@ -152,7 +152,15 @@ export class FileInfoStore extends EventEmitter {
             }
         }
 
+        this.clearOldArray(filesToMergeTo);
+
         return files;
+    }
+
+    clearOldArray(oldFiles) {
+        for(let i=0;i<oldFiles.length;i++) {
+            oldFiles[i] = null;
+        }
     }
 
     notifyUpdatedFiles(files) {
