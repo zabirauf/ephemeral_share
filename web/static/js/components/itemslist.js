@@ -19,10 +19,19 @@ export class ItemsList extends React.Component {
         );
     }
 
+    getHeaderItem() {
+        if(this.props.headerText) {
+            return (<li className='collection-item'><h5 className='center-align'>{this.props.headerText}</h5></li>);
+        }
+
+        return ``;
+    }
+
     render() {
         let items = this.props.items.map(this.createItem.bind(this));
         return (
                 <ul className='collection'>
+                {this.getHeaderItem()}
                 {items}
             </ul>
         );

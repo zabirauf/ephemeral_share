@@ -73,13 +73,18 @@ export class ListItem extends React.Component {
     }
 
     render() {
+        let fileItem = {
+            marginTop: "2px",
+            marginBottom: "3px"
+        };
+
         return (
-           <li className='collection-item avatar'>
-                <i className='material-icons circle'>insert_drive_file</i>  
+           <li className='hoverable collection-item avatar' style={fileItem}>
+               <i className='material-icons circle'>insert_drive_file</i>
                <span className='title truncate'>{this.props.data.name}</span>
-                <p>Size: {this.sizeInMb(this.props.data.size)} MB</p>
-                {this.getFileDownloadProgress()}
-                {this.getFileAction()}
+               <p>Size: {this.sizeInMb(this.props.data.size)} MB</p>
+               {this.getFileDownloadProgress()}
+               {this.getFileAction()}
            </li>
         );
     }
