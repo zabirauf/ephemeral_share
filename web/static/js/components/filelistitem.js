@@ -76,22 +76,30 @@ export class FileListItem extends React.Component {
 
     getShareLocation() {
         return (
-             <div className='row' style={{display: (this.fileDropDisabled() ? "none":"block")}} >
+             <div className='row card-panel' style={{display: (this.fileDropDisabled() ? "none":"block")}} >
                 <div >
                     <div className='progress' style={{display: (this.state.shareURL)?'none':'block'}}>
                         <div className='indeterminate'></div>
                     </div>
                     <div className='input-field col s12' style={{display: (this.state.shareURL)?'block':'none'}}>
-                       <p>Select and Ctrl - C to copy and share the url</p>
-                        <input id='share-url' onFocus={this.onShareURLFocus} type='text' value={this.state.shareURL}  />
+                       <p>Share the following link</p>
+                        <input className='flow-text' id='share-url' onFocus={this.onShareURLFocus} type='text' value={this.state.shareURL}  />
                     </div>
                 </div>
             </div>);
     }
 
+    getListHeaderText() {
+        if(this.fileDropDisabled()) {
+            return "Files available";
+        }
+
+        return "Files added";
+    }
     render() {
         return (
-                <div className='container'>
+                <div className='row'>
+                <div className='col m6'>
                 {(this.fileDropDisabled())?<PeerConnectionStatus /> : ``}
                 {this.getShareLocation()}
                 <div className='row' style={{display: (this.fileDropDisabled() ? "none":"block")}}>
@@ -99,12 +107,16 @@ export class FileListItem extends React.Component {
                          <FileHandler onFileSelected={this.onFileAdded.bind(this)} />
                     </div>
                 </div>
+                </div>
+
+                <div className='col m6'>
                 <div className='row'>
                     <div className='col s12'>
-                <ItemsList disableSave={!this.fileDropDisabled()} items={this.state.items} onItemDelete={this.onFileDeleted.bind(this)} onItemSave={this.onFileDownload.bind(this)}/>
+                <ItemsList headerText={this.getListHeaderText()} disableSave={!this.fileDropDisabled()} items={this.state.items} onItemDelete={this.onFileDeleted.bind(this)} onItemSave={this.onFileDownload.bind(this)}/>
                     </div>
                 </div>
-            </div>
+                </div>
+                </div>
         );
     }
 }
