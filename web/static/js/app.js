@@ -4,11 +4,17 @@ import {Socket} from "phoenix";
 
 import {PeerCommunicationProtocol} from "./lib/peercommunication";
 import {FileInfoStore} from "./stores/fileinfostore";
-import {FileListItem} from "./components/filelistitem";
+import {FileShareApp} from "./components/filelistitem";
 import {FileTransferManager} from "./lib/filetransfermanager";
+import {ErrorBanner} from "./components/errorbanner";
 
 class App {
     static init() {
+
+        let webRTCSupported = window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
+        let webSocketSupported = "WebSocket" in window;
+        let isAppSupported = webRTCSupported && webSocketSupported;
+
         let getParams = App.getURLParams();
         let isInitiator = getParams.peer_id === undefined;
 
@@ -36,11 +42,18 @@ class App {
         // TODO: Have a better way instead of a circular dependency
         FileInfoStore.instance().initialize();
 
-        React.render(
-                <FileListItem
-            disableDrop={!isInitiator} />,
-            document.getElementById("react-container")
-        );
+        if(isAppSupported) {
+            React.render(
+                    <FileShareApp
+                disableDrop={!isInitiator} />,
+                document.getElementById("react-container")
+            );
+        }
+        else {
+            React.render(
+                    <ErrorBanner errorMessage="Your browser is not supported. Please use the latest version of <a href='http://www.google.com/chrome/' target='_blank'>Chrome</a> or <a href='https://www.mozilla.org/en-US/firefox/new/' target='_blank'>Firefox</a>" />,
+                document.getElementById("react-container"));
+        }
     }
 
     static getURLParams() {

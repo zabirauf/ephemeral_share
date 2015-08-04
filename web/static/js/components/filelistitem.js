@@ -8,7 +8,7 @@ import {FileActions} from "../actions/fileactions";
 import PeerCommunicationConstants from "../constants/PeerCommunicationConstants";
 import {PeerCommunicationProtocol} from "../lib/peercommunication";
 
-export class FileListItem extends React.Component {
+export class FileShareApp extends React.Component {
 
     constructor(props) {
         super(props);
