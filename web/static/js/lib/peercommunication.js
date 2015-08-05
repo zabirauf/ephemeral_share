@@ -93,6 +93,27 @@ export class PeerCommunicationProtocol extends EventEmitter {
     onWSRegistered(msg) {
         console.log("WS: Registered", msg);
         this.id = msg.id;
+        this.chan.leave();
+
+        let socket = new Socket("/peer", {
+            logger: (kind, msg, data) => {console.log(`${kind}: ${msg}`, data);}
+        });
+
+        socket.connect();
+
+        socket.onClose(e => console.log("CLOSE", e));
+
+
+        this.chan = socket.chan("peer:" + this.id, {});
+
+        this.chan.join().receive("ok", this.onWSPeerJoined.bind(this))
+            .after(1000, () => console.log("Connection interuption"));
+
+        this.chan.onError(this.onWSError.bind(this));
+        this.chan.onClose(this.onWSClose.bind(this));
+    }
+
+    onWSPeerJoined() {
         this.chan.on("error_connect", this.onWSPeerErrorConnect.bind(this));
         this.chan.on("peer_connect", this.onWSPeerConnect.bind(this));
         this.chan.on("offer", this.onWSOffer.bind(this));
