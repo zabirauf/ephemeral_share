@@ -13,7 +13,6 @@ defmodule EphemeralShare do
       worker(EphemeralShare.Repo, []),
       # Here you could define other workers and supervisors as children
       # worker(EphemeralShare.Worker, [arg1, arg2, arg3]),
-      worker(EphemeralShare.ClientMap, []),
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html

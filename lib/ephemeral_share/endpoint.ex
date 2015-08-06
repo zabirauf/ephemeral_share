@@ -1,6 +1,10 @@
 defmodule EphemeralShare.Endpoint do
   use Phoenix.Endpoint, otp_app: :ephemeral_share
 
+
+  socket "/ws", EphemeralShare.BrokerSocket
+  socket "/peer", EphemeralShare.PeerSocket
+
   # Serve at "/" the static files from "priv/static" directory.
   #
   # You should set gzip to true if you are running phoenix.digest
@@ -12,6 +16,7 @@ defmodule EphemeralShare.Endpoint do
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.
   if code_reloading? do
+    socket "/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket
     plug Phoenix.LiveReloader
     plug Phoenix.CodeReloader
   end
@@ -32,5 +37,5 @@ defmodule EphemeralShare.Endpoint do
     key: "_ephemeral_share_key",
     signing_salt: "rGsZ38GF"
 
-  plug :router, EphemeralShare.Router
+  plug EphemeralShare.Router
 end
