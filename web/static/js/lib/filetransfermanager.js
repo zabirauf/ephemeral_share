@@ -50,6 +50,10 @@ export class FileTransferManager extends EventEmitter {
         }
     }
 
+    /*******************************************
+     *** Download complete & progress events ***
+     *******************************************/
+
     /**
      * Adds a listener for the file transfer complete
      */
@@ -78,14 +82,68 @@ export class FileTransferManager extends EventEmitter {
         this.removeListener(FileTransferConstants.TRANSFER_FILE_DOWNLOAD_PROGRESS, callback);
     }
 
+    /**
+     * Called when the file chunk is downloaded
+     */
     onFileDownloadProgress(f) {
         console.log("File download progress", f);
         this.emit(FileTransferConstants.TRANSFER_FILE_DOWNLOAD_PROGRESS, f);
     }
 
+    /**
+     * Called when the file is downloaded from the peer
+     */
     onFileDownloaded(f) {
         console.log("File Downloaded", f);
         this.emit(FileTransferConstants.TRANSFER_FILE_DOWNLOAD_COMPLETE, f);
+    }
+
+    /*****************************************
+     *** Upload complete & progress events ***
+     *****************************************/
+
+    /**
+     * Adds a listener for the file upload complete
+     */
+    addOnFileUploadCompleteListener(callback) {
+        this.on(FileTransferConstants.TRANSFER_FILE_UPLOAD_COMPLETE, callback);
+    }
+
+    /**
+     * Removes listener for the file upload complete
+     */
+    removeOnFileUploadCompleteListener(callback) {
+        this.removeListener(FileTransferConstants.TRANSFER_FILE_UPLOAD_COMPLETE, callback);
+    }
+
+    /**
+     * Adds a listener for the file upload progress
+     */
+    addOnFileUploadProgressListener(callback) {
+        this.on(FileTransferConstants.TRANSFER_FILE_UPLOAD_PROGRESS, callback);
+    }
+
+    /**
+     * Removes listener for the file upload progress
+     */
+    removeOnFileUploadProgressListener(callback) {
+        this.removeListener(FileTransferConstants.TRANSFER_FILE_UPLOAD_PROGRESS, callback);
+    }
+
+    /**
+     * Called when the file chunk is uploaded
+     */
+    onFileUploadProgress(f) {
+        console.log("File upload progress", f);
+        this.emit(FileTransferConstants.TRANSFER_FILE_UPLOAD_PROGRESS, f);
+    }
+
+    /**
+     * Called whent the file upload to a particular peer is completed
+     */
+    onFileUploaded(f) {
+        console.log("File Uploaded", f);
+        this.emit(FileTransferConstants.TRANSFER_FILE_UPLOAD_COMPLETE, f);
     }
 
     /**
@@ -112,7 +170,14 @@ export class FileTransferManager extends EventEmitter {
             // Take the first file
             file = file[0];
 
-            new FileTransferSender(this.peerComm, peer_id, file, id).transfer();
+            let correlationId = this.files.indexOf(file);
+
+            let uploader = new FileTransferSender(this.peerComm, peer_id, file, id, correlationId);
+            uploader.addOnCompleteListener(this.onFileUploaded.bind(this));
+            uploader.addOnProgressListener(this.onFileUploadProgress.bind(this));
+
+            // Start the file upload
+            uploader.transfer();
         }
     }
 
@@ -123,6 +188,8 @@ export class FileTransferManager extends EventEmitter {
         let downloader = new FileTransferReceiver(this.peerComm, peer_id, file, correlationId);
         downloader.addOnCompleteListener(callback);
         downloader.addOnProgressListener(progressCallback);
+
+        // Start the file download
         downloader.download();
     }
 }

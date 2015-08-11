@@ -72,6 +72,21 @@ export class ListItem extends React.Component {
         }
     }
 
+    getFileUploadProgress() {
+        if(this.props.data.uploadProgress) {
+            return Object.keys(this.props.data.uploadProgress).map((key) => {
+                return (
+                        <div className="progress">
+                        <div className="determinate" style={{width: `${this.props.data.uploadProgress[key].percentage}%`}}></div>
+                        </div>
+                );
+            });
+        }
+        else {
+            return ``;
+        }
+    }
+
     render() {
         let fileItem = {
             marginTop: "2px",
@@ -84,6 +99,7 @@ export class ListItem extends React.Component {
                <span className='title truncate'>{this.props.data.name}</span>
                <p>Size: {this.sizeInMb(this.props.data.size)} MB</p>
                {this.getFileDownloadProgress()}
+               {this.getFileUploadProgress()}
                {this.getFileAction()}
            </li>
         );

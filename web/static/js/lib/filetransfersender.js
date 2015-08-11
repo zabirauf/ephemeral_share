@@ -1,10 +1,13 @@
 /*jshint esnext: true*/
 
+let FILE_TRANSFER_UPLOAD_PROGRESS="file_transfer_upload_progress";
+let FILE_TRANSFER_UPLOAD_COMPLETE = "file_transfer_upload_complete";
+
 /**
  * The file sender, which slices up the file and sends it to the peer
  */
 export class FileTransferSender extends EventEmitter {
-    constructor(peerComm, peer_id, file, id) {
+    constructor(peerComm, peer_id, file, id, correlationId) {
         super();
         this.chunkSize = 16 * 1024;
 
@@ -12,6 +15,7 @@ export class FileTransferSender extends EventEmitter {
         this.peer_id = peer_id;
         this.file = file;
         this.id = id;
+        this.correlationId = correlationId;
         this.numberOfChunks = Math.ceil(this.file.size/this.chunkSize);
         this.chunkNum = 0;
     }
@@ -25,6 +29,7 @@ export class FileTransferSender extends EventEmitter {
      */
     transferChunk() {
         if(this.chunkNum >= this.numberOfChunks) {
+            this.emit(FILE_TRANSFER_UPLOAD_COMPLETE, {file: this.file, correlationId: this.correlationId, peerId: this.peer_id});
             return;
         }
 
@@ -34,6 +39,7 @@ export class FileTransferSender extends EventEmitter {
         let reader = new FileReader();
 
         reader.onload = this.sendReadChunkAndContinue.bind(this);
+
 
         reader.readAsArrayBuffer(chunk);
     }
@@ -53,11 +59,41 @@ export class FileTransferSender extends EventEmitter {
             data: this.ab2str(buffer)
         }});
 
+        this.emit(FILE_TRANSFER_UPLOAD_PROGRESS, {chunk: this.chunkNum+1, total: this.numberOfChunks, correlationId: this.correlationId, peerId: this.peer_id});
+
         // Incrementing chunk number
         this.chunkNum += 1;
 
         // Send next chunk
         this.transfer();
+    }
+
+    /**
+     * Adds a listener for the file transfer upload progress
+     */
+    addOnProgressListener(callback) {
+        this.on(FILE_TRANSFER_UPLOAD_PROGRESS, callback);
+    }
+
+    /**
+     * Removes listener for the file transfer upload progress
+     */
+    removeOnProgressListener(callback) {
+        this.removeListener(FILE_TRANSFER_UPLOAD_PROGRESS, callback);
+    }
+
+    /**
+     * Adds a listener for the file transfer upload complete
+     */
+    addOnCompleteListener(callback) {
+        this.on(FILE_TRANSFER_UPLOAD_COMPLETE, callback);
+    }
+
+    /**
+     * Removes listener for the file transfer upload complete
+     */
+    removeOnCompleteListener(callback) {
+        this.removeListener(FILE_TRANSFER_UPLOAD_COMPLETE, callback);
     }
 
     /**

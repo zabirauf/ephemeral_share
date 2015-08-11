@@ -49,8 +49,13 @@ export class FileInfoStore extends EventEmitter {
     }
 
     initialize() {
+        // Listeners for download progress and complete
         FileTransferManager.instance().addOnFileDownloadCompleteListener(this.onFileDownloadComplete.bind(this));
         FileTransferManager.instance().addOnFileDownloadProgressListener(this.onFileDownloadProgress.bind(this));
+
+        // Listeners for upload progress and complete
+        FileTransferManager.instance().addOnFileUploadCompleteListener(this.onFileUploadComplete.bind(this));
+        FileTransferManager.instance().addOnFileUploadProgressListener(this.onFileUploadProgress.bind(this));
     }
 
     dispatchAction({source: source, action: action}) {
@@ -90,6 +95,28 @@ export class FileInfoStore extends EventEmitter {
 
     onFileDownloadProgress({chunk: chunk, total: total, correlationId: index}) {
         this.files[index].downloadProgress = Math.ceil(chunk/total * 100);
+        this.notifyUpdatedFiles(this.files);
+    }
+
+    onFileUploadComplete({file: file, correlationId: index, peerId: peer_id}) {
+        if(this.files[index].uploadProgress && this.files[index].uploadProgress[peer_id]) {
+            delete this.files[index].uploadProgress[peer_id];
+
+            this.notifyUpdatedFiles(this.files);
+        }
+    }
+
+    onFileUploadProgress({chunk: chunk, total: total, correlationId: index, peerId: peer_id}) {
+        if(!this.files[index].uploadProgress) {
+            this.files[index].uploadProgress = {};
+        }
+
+        this.files[index].uploadProgress[peer_id] = {
+            chunk: chunk,
+            total: total,
+            percentage: Math.ceil(chunk/total * 100)
+        };
+
         this.notifyUpdatedFiles(this.files);
     }
 
