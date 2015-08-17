@@ -164,7 +164,7 @@ export class FileTransferManager extends EventEmitter {
     /**
      * Start upload of the file
      */
-    startFileTransfer(peer_id, {name: name, transfer_id: id}) {
+    startFileTransfer(peer_id, {name: name, transfer_id: id, transfer_rate: transferRate}) {
         let file = this.files.filter((f) => f.name === name);
         if(file && file.length > 0) {
             // Take the first file
@@ -172,7 +172,7 @@ export class FileTransferManager extends EventEmitter {
 
             let correlationId = this.files.indexOf(file);
 
-            let uploader = new FileTransferSender(this.peerComm, peer_id, file, id, correlationId);
+            let uploader = new FileTransferSender(this.peerComm, peer_id, file, id, correlationId, transferRate);
             uploader.addOnCompleteListener(this.onFileUploaded.bind(this));
             uploader.addOnProgressListener(this.onFileUploadProgress.bind(this));
 

@@ -1,4 +1,6 @@
 /*jshint esnext: true*/
+import {PeerCommunicationProtocol} from "./peercommunication";
+import PeerCommunicationConstants from "../constants/PeerCommunicationConstants";
 
 let FILE_TRANSFER_UPLOAD_PROGRESS="file_transfer_upload_progress";
 let FILE_TRANSFER_UPLOAD_COMPLETE = "file_transfer_upload_complete";
@@ -7,7 +9,7 @@ let FILE_TRANSFER_UPLOAD_COMPLETE = "file_transfer_upload_complete";
  * The file sender, which slices up the file and sends it to the peer
  */
 export class FileTransferSender extends EventEmitter {
-    constructor(peerComm, peer_id, file, id, correlationId) {
+    constructor(peerComm, peer_id, file, id, correlationId, transferRate) {
         super();
         this.chunkSize = 16 * 1024;
 
@@ -16,9 +18,44 @@ export class FileTransferSender extends EventEmitter {
         this.file = file;
         this.id = id;
         this.correlationId = correlationId;
+        this.transferRate = transferRate;
+
         this.numberOfChunks = Math.ceil(this.file.size/this.chunkSize);
         this.chunkNum = 0;
+
+        /**
+         * For controlling rate of transfer, the file upload is divided into segments which is
+         * a group of chunks e.g 10 chunks can be one segment. At sending the segment the sender
+         * will stop to send any more segments and after receiver acknowledges receiving the segment
+         * the sender will resume sending again.
+         * This approach can later be used to add the feature to resume and pause download as well
+         */
+
+        // The segment number tells which segment is being uploaded
+        this.segmentNumberSending = 1;
+        this.totalSegments = Math.ceil(this.numberOfChunks/transferRate);
+
+        this.canWaitForAck = false;
+        this.peerComm.addEventListener(PeerCommunicationConstants.PEER_DATA, this.onPeerDataReceived.bind(this));
     }
+
+    /**
+     * Check if the peer data received type is ack then resume download
+     */
+    onPeerDataReceived({peer_id: peer_id, data: data}) {
+
+        if(data.type === "file_segment_ack" && peer_id === this.peer_id
+           && data.data.transfer_id && data.data.transfer_id == this.id
+           && data.data.segment_number && data.data.segment_number === this.segmentNumberSending) {
+
+            console.log(`Segment ACK: ${data.data.segment_number}`);
+            this.segmentNumberSending += 1;
+            this.canWaitForAck = false;
+            // Start asyncronously
+            setTimeout(this.transfer.bind(this), 0);
+        }
+    }
+
 
     transfer() {
         (() => this.transferChunk())();
@@ -33,13 +70,18 @@ export class FileTransferSender extends EventEmitter {
             return;
         }
 
+        if(this.canWaitForAck && this.chunkNum % this.transferRate === 0) {
+            // Next segment has been reached. Stop file transfer & wait for ack from receiver
+            return;
+        }
+
+        this.canWaitForAck = true;
         let startByte = this.chunkSize * this.chunkNum;
         let chunk = this.file.slice(startByte, startByte + this.chunkSize);
 
         let reader = new FileReader();
 
         reader.onload = this.sendReadChunkAndContinue.bind(this);
-
 
         reader.readAsArrayBuffer(chunk);
     }

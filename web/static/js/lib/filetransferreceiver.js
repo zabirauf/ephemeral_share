@@ -2,6 +2,7 @@
 
 import {PeerCommunicationProtocol} from "./peercommunication";
 import PeerCommunicationConstants from "../constants/PeerCommunicationConstants";
+import FileTransferConstants from "../constants/filetransferconstants";
 
 let FILE_TRANSFER_PROGRESS = "file_transfer_progress";
 
@@ -22,13 +23,17 @@ export class FileTransferReceiver extends EventEmitter {
         this.id = this.generateId();
         this.receivedBuffer = null;
         this.chunksReceived = 0;
+
+        this.transferRate = FileTransferConstants.TRANSFER_RATE;
+        this.segmentNumberReceived = 0;
     }
 
     download() {
         // Change the file name as identifier to some id
         this.peerComm.send(this.peer_id, {type: "download", data: {
             name: this.fileInfo.name,
-            transfer_id: this.id
+            transfer_id: this.id,
+            transfer_rate: this.transferRate
         }});
 
         this.peerComm.addEventListener(PeerCommunicationConstants.PEER_DATA, this.onPeerDataReceived.bind(this));
@@ -51,6 +56,8 @@ export class FileTransferReceiver extends EventEmitter {
 
         this.chunksReceived += 1;
 
+        this.sendSegmentAckIfApplicable();
+
         console.log(`Chunk Received ${this.chunksReceived}`);
         this.emit(FILE_TRANSFER_PROGRESS, {chunk: chunkNum+1, total: totalChunks, correlationId: this.receiverId});
 
@@ -60,6 +67,24 @@ export class FileTransferReceiver extends EventEmitter {
 
             // Remove any resources as the download is complete
             this.destructResources();
+        }
+    }
+
+    /**
+     * Send the acknowledgment for the segment being received
+     */
+    sendSegmentAckIfApplicable() {
+        // We check for chunks Received +1 as at the sender side it is one greate
+        // TODO: Improve this logic. It is ugly
+        if((this.chunksReceived+1) % this.transferRate === 0) {
+            this.segmentNumberReceived += 1;
+
+            this.peerComm.send(this.peer_id, {type: "file_segment_ack", data: {
+                transfer_id: this.id,
+                segment_number: this.segmentNumberReceived
+            }});
+
+            console.log(`Segment ACK sent: ${this.segmentNumberReceived}`);
         }
     }
 
