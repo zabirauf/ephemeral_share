@@ -3,13 +3,13 @@ defmodule EphemeralShare.PeerState do
   use GenServer
 
   def start_link(peer_id) do
-    GenServer.start_link(__MODULE__, [peer_id], [name: {:global, peer_state_proc_id(peer_id)}])
+    GenServer.start_link(__MODULE__, [peer_id], name: {:global, peer_state_proc_id(peer_id)})
   end
 
   def stop(peer_id) do
     peer_id
     |> peer_state_proc_id
-    |> :global.whereis_name
+    |> :global.whereis_name()
     |> GenServer.cast(:shutdown)
   end
 
@@ -23,8 +23,8 @@ defmodule EphemeralShare.PeerState do
     {:ok, args}
   end
 
-  def handle_cast(:shutdown, _from, state) do
-    Logger.debug "Shutdown peer state #{inspect(state)}"
+  def handle_cast(:shutdown, state) do
+    Logger.debug("Shutdown peer state #{inspect(state)}")
     {:stop, :shutdown, state}
   end
 end
