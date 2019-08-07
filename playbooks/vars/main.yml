@@ -1,5 +1,0 @@
----
-app_name: ephemeral_share
-repo_url: "https://github.com/zabirauf/ephemeral_share.git"
-app_port: 3001
-domains: ["epicshare.zohaib.me", "filecha.in"]
