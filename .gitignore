@@ -41,3 +41,5 @@ node_modules/
 # secrets files as long as you replace their contents by environment
 # variables.
 /config/*.secret.exs
+
+.elixir_ls/
