@@ -1,20 +1,11 @@
 # EphemeralShare
 
-To start your Phoenix server:
+[![Build Status](https://semaphoreci.com/api/v1/projects/3afec371-4990-42a5-9d1f-9da212e602f1/485062/badge.svg)](https://semaphoreci.com/zabirauf/ephemeral_share)
+[![Build status](https://ci.frigg.io/badges/zabirauf/ephemeral_share/)]
 
-  * Install dependencies with `mix deps.get`
-  * Create and migrate your database with `mix ecto.setup`
-  * Install Node.js dependencies with `cd assets && npm install`
-  * Start Phoenix endpoint with `mix phx.server`
+To start your new Phoenix application:
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+1. Install dependencies with `mix deps.get`
+2. Start Phoenix endpoint with `mix phx.server`
 
-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
-
-## Learn more
-
-  * Official website: http://www.phoenixframework.org/
-  * Guides: https://hexdocs.pm/phoenix/overview.html
-  * Docs: https://hexdocs.pm/phoenix
-  * Mailing list: http://groups.google.com/group/phoenix-talk
-  * Source: https://github.com/phoenixframework/phoenix
+Now you can visit `localhost:4000` from your browser.
