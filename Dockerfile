@@ -13,10 +13,16 @@ RUN mix local.hex --force \
     && apt-get install -y build-essential \
     && mix local.rebar --force
 
-EXPOSE 4000
+ENV PORT 4001
+ENV HOST localhost
+ENV MIX_ENV prod
 
-RUN MIX_ENV=prod mix compile \
+EXPOSE 4001
+
+RUN npm install --prefix ./assets
+
+RUN mix compile \
     && npm run deploy --prefix ./assets \
     && mix phx.digest
 
-CMD PORT=4001 MIX_ENV=prod mix phx.server
+CMD mix phx.server

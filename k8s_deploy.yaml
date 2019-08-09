@@ -1,0 +1,43 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: ephemeral-share
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ephemeral-share
+
+  template:
+    metadata:
+      labels:
+        app: ephemeral-share
+    spec:
+      containers:
+      - name: ephemeral-share
+        image: zabirauf/ephemeral_share:0.1.0.1
+        ports:
+        - containerPort: 4001
+        env:
+        - name: PORT
+          value: "4001"
+        - name: HOST
+          value: "filecha.in"
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: ephemeral-share
+  namespace: default
+spec:
+  type: LoadBalancer
+  selector:
+    app: ephemeral-share
+  ports:
+  - name: http
+    port: 80
+    targetPort: 4001
+    protocol: TCP
