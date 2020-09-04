@@ -8,7 +8,7 @@
     "css-brunch": ">= 1.0 < 1.8",
     "flux": "^2.0.3",
     "javascript-brunch": ">= 1.0 < 1.8",
-    "react": "^0.13.3",
+    "react": "^16.13.1",
     "react-brunch": "^1.0.9",
     "sass-brunch": "^1.8.10",
     "simple-peer": "^5.11.4",
